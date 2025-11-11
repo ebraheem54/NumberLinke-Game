@@ -20,6 +20,8 @@ class Board():
 
          print(horizantal)
 
+
+
     def ColorsInputs(self,numberOfColors):
      list_of_colors=[]
      if(numberOfColors>max(self.rows,self.colunms)):
@@ -36,20 +38,49 @@ class Board():
           print(f"enter your color number:{i+1} ")
           color= int(input())
           list_of_colors.append(color)
-
+   #   print(type(list_of_colors))
      return list_of_colors  
+
 
 
     def placeForColor(self,list_of_colors):
             positions = {}
  
             for i in range(len(list_of_colors)):
-                start_row_x=input(f"enter start Coordinates  row of the number {list_of_colors[i]}:\n")
-                start_column_y=input(f"enter start Coordinates column  of the number {list_of_colors[i]}:\n")
+                start_row_x=None
+                while start_row_x is None:
+                     start_row_x=self.__validationForRow(
+                                          int(input(f"enter start Coordinates  row of the number {list_of_colors[i]}:\n")),
+                                           self.rows,
+                                           "row")
+
+                start_column_y=None
+                while start_column_y is None:
+                   start_column_y=self.__validationForRow(
+                                 int(input(f"enter start Coordinates column  of the number {list_of_colors[i]}:\n")),
+                                 self.colunms,
+                                 "column",
+                                 positions)
+                 
+
+
                 Coordinates_start=[start_row_x,start_column_y]  
 
-                end_row_x=input(f"enter  end Coordinates row of the number {list_of_colors[i]}:\n")
-                end_row_y=input(f"enter end column  of the number {list_of_colors[i]}:\n")
+                end_row_x=None
+                while end_row_x is None:
+                     end_row_x=self.__validationForRow(
+                                          int(input(f"enter end row of the number {list_of_colors[i]}:\n")),
+                                           self.rows,
+                                           "row",
+                                           positions)
+
+                end_row_y=None 
+                while end_row_y is None:
+                   end_row_y=self.__validationForRow(
+                                 int(self.input(f"enter end column  of the number {list_of_colors[i]}:\n")),
+                                 self.colunms,
+                                 "column",
+                                 positions)
 
                 Coordinates_end=[end_row_x,end_row_y]
                 dic_coordinates={"start":Coordinates_start,"end":Coordinates_end}  
@@ -63,5 +94,14 @@ class Board():
    #private function  
    force the input row stay in less than grid's row
     """
-    def __validationForRow(self,x):
-        
+    def __validationForRow(self,value,limit,name="row/column",positions):
+      try:
+            if(0<=value<=limit):
+              return value
+          
+            else:
+             print(f"Invalid {name}. Must be between 0 and {limit-1}.")
+             return None
+      except ValueError:
+            print(f"Invalid {name}. Must be an integer.")
+            return None
