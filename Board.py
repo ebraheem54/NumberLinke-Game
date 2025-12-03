@@ -1,107 +1,131 @@
-import numpy   as n
-class Board():
-    
-    def __init__(self,numberOfColums,numberOfRows,numberOfColores):
-        self.colunms=numberOfColums
-        self.rows=numberOfRows
-        self.numberOfColores=numberOfColores
-        self.gird=n.zeros((self.rows,self.colunms),dtype=int)
+import numpy as np
 
+class Board:
+    def __init__(self, num_cols, num_rows, num_colors):
+        self.cols = num_cols
+        self.rows = num_rows
+        self.num_colors = num_colors
+        self.grid = np.zeros(self.rows * self.cols, dtype=np.uint8)
+        self.positions = {}
+    
+    def _index(self, row, col):
+        return row * self.cols + col
     
     def printGrid(self):
-         horizantal='+'+'----+'*self.colunms
-         print("\n")
-         for i in range(self.rows): 
-            print(horizantal)
-            row='|'
-            for j in range(self.colunms):
-                row+=f'  {self.gird[i,j]} |'    
+        horiz = '+' + '----+' * self.cols
+        print("\n")
+        for i in range(self.rows):
+            print(horiz)
+            row = '|'
+            for j in range(self.cols):
+                cell_val = self.grid[self._index(i, j)]
+                display = ' ' if cell_val == 0 else str(cell_val)
+                row += f'  {display} |'
             print(row)
-
-         print(horizantal)
-
-
-
-    def ColorsInputs(self,numberOfColors):
-     list_of_colors=[]
-     if(numberOfColors>max(self.rows,self.colunms)):
-        for i in range(1,4):
-           if(numberOfColors<=min(self.rows,self.colunms)):
-              print("Ok this number accepted lets enter the colors's number")
-              break
-           print(f" attempts {i} of 3 ,Please enter number less than grid size {max(self.rows,self.colunms)}")
-           numberOfColors=int(input())
-           if(i==3 and numberOfColors>max(self.rows, self.colunms)):
-                  print("please try again")
+        print(horiz)
     
-     for i in range(numberOfColors):
-          print(f"enter your color number:{i+1} ")
-          color= int(input())
-          list_of_colors.append(color)
-   #   print(type(list_of_colors))
-     return list_of_colors  
+    def ColorsInputs(self, numberOfColors):
+        colors = []
+        if numberOfColors > max(self.rows, self.cols):
+            for i in range(1, 4):
+                if numberOfColors <= max(self.rows, self.cols):
+                    print("Number accepted.")
+                    break
+                print(f"Attempt {i} of 3. Enter ≤ {max(self.rows, self.cols)}:")
+                numberOfColors = int(input())
+                if i == 3 and numberOfColors > max(self.rows, self.cols):
+                    print("Try again later.")
+                    return []
 
+        for i in range(numberOfColors):
+            while True:
+                color = int(input(f"Enter color number {i+1}: "))
+                if color == 0:
+                    print("Color cannot be 0.")
+                    continue
+                if color in colors:
+                    print("Color already used!")
+                    continue
+                colors.append(color)
+                break
+        return colors
+    
+    def placeForColor(self, list_of_colors):
+        positions = {}
+        for color in list_of_colors:
+            start_r, start_c = None, None
+            while start_r is None or start_c is None:
+                row = self._validateRange(int(input(f"Start row for {color}: ")), self.rows, "row")
+                col = self._validateRange(int(input(f"Start column for {color}: ")), self.cols, "column")
+                if row is not None and col is not None:
+                    if not self._isOccupied(row, col, positions):
+                        start_r, start_c = row, col
+                    else:
+                        print("Cell occupied.")
 
+            end_r, end_c = None, None
+            while end_r is None or end_c is None:
+                row = self._validateRange(int(input(f"End row for {color}: ")), self.rows, "row")
+                col = self._validateRange(int(input(f"End column for {color}: ")), self.cols, "column")
+                if row is not None and col is not None:
+                    if [row, col] == [start_r, start_c]:
+                        print("Cannot be same as start.")
+                        continue
+                    if not self._isOccupied(row, col, positions):
+                        end_r, end_c = row, col
+                    else:
+                        print("Cell occupied.")
 
-    def placeForColor(self,list_of_colors):
-            positions = {}
- 
-            for i in range(len(list_of_colors)):
-                start_row_x=None
-                while start_row_x is None:
-                     start_row_x=self.__validationForRow(
-                                          int(input(f"enter start Coordinates  row of the number {list_of_colors[i]}:\n")),
-                                           self.rows,
-                                           "row")
+            positions[color] = {"start": [start_r, start_c], "end": [end_r, end_c]}
 
-                start_column_y=None
-                while start_column_y is None:
-                   start_column_y=self.__validationForRow(
-                                 int(input(f"enter start Coordinates column  of the number {list_of_colors[i]}:\n")),
-                                 self.colunms,
-                                 "column",
-                                 positions)
-                 
-
-
-                Coordinates_start=[start_row_x,start_column_y]  
-
-                end_row_x=None
-                while end_row_x is None:
-                     end_row_x=self.__validationForRow(
-                                          int(input(f"enter end row of the number {list_of_colors[i]}:\n")),
-                                           self.rows,
-                                           "row",
-                                           positions)
-
-                end_row_y=None 
-                while end_row_y is None:
-                   end_row_y=self.__validationForRow(
-                                 int(self.input(f"enter end column  of the number {list_of_colors[i]}:\n")),
-                                 self.colunms,
-                                 "column",
-                                 positions)
-
-                Coordinates_end=[end_row_x,end_row_y]
-                dic_coordinates={"start":Coordinates_start,"end":Coordinates_end}  
-               
-                positions[list_of_colors[i]]=dic_coordinates
- 
-            print(positions)      
-
-
-    """
-   #private function  
-   force the input row stay in less than grid's row
-    """
-    def __validationForRow(self,value,limit,name="row/column",positions):
-      try:
-            if(0<=value<=limit):
-              return value
-          
+        self._addNumbersToGrid(positions)
+        self.positions = positions
+        return positions
+    
+    def _addNumbersToGrid(self, positions):
+        for color, coord in positions.items():
+            s = coord["start"]
+            e = coord["end"]
+            self.grid[self._index(s[0], s[1])] = color
+            self.grid[self._index(e[0], e[1])] = color
+    
+    def isValidPosition(self, row, col):
+        return 0 <= row < self.rows and 0 <= col < self.cols
+    
+    def _isOccupied(self, row, col, positions):
+        for coord in positions.values():
+            if coord["start"] == [row, col] or coord["end"] == [row, col]:
+                return True
+        return False
+    
+    def _validateRange(self, value, limit, name):
+        if 0 <= value < limit:
+            return value
+        print(f"Invalid {name}, must be 0-{limit-1}")
+        return None
+    
+    def getCell(self, row, col):
+        return self.grid[self._index(row, col)]
+    
+    def setCell(self, row, col, value):
+        self.grid[self._index(row, col)] = value
+        return True
+    
+    def resetGrid(self):
+        self.grid.fill(0)
+        for color, coord in self.positions.items():
+            s = coord["start"]
+            e = coord["end"]
+            self.grid[self._index(s[0], s[1])] = color
+            self.grid[self._index(e[0], e[1])] = color
+        print("Grid has been reset successfully.")
+    
+    def chooseStartEnd(self, color):
+        while True:
+            choice = input(f"Start or End for color {color}? (s/e): ").lower()
+            if choice == "s":
+                return self.positions[color]["start"].copy()
+            elif choice == "e":
+                return self.positions[color]["end"].copy()
             else:
-             print(f"Invalid {name}. Must be between 0 and {limit-1}.")
-             return None
-      except ValueError:
-            print(f"Invalid {name}. Must be an integer.")
-            return None
+                print("Invalid choice, enter 's' or 'e'.")
