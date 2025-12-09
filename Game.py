@@ -5,17 +5,23 @@ class Game:
     def __init__(self, board: Board):
         self.board = board
         self.paths = {}
+        self.path_costs = {}  # NEW: For UCS
         self.visited_states = set()
         self.current_color: Optional[int] = None
         self.completed_colors = set()
 
         for color, pos in self.board.positions.items():
             self.paths[color] = [tuple(pos["start"])]
+            self.path_costs[color] = 0.0  # NEW: For UCS
     
     def _idx(self, row, col):
         return row * self.board.cols + col
     
-    def GetPossibleMovesUnvisited(self) -> List['Game']:
+    # NEW: For UCS
+    def get_total_cost(self) -> float:
+        return sum(self.path_costs.values())
+    
+    def GetPossibleMoves(self) -> List['Game']:
         next_states = []
         
         for color, path in self.paths.items():
@@ -38,15 +44,18 @@ class Game:
                 
                 if cell == 0 or ((nr, nc) == end and cell == color):
                     if (nr, nc) not in path:
-                        self.ApplyMove(color, (nr, nc))
+                        # NEW: Get weight for UCS
+                        move_cost = self.board.get_weight(nr, nc) if hasattr(self.board, 'get_weight') else 1.0
+                        
+                        self.ApplyMove(color, (nr, nc), move_cost)
                         
                         if not self.IsVisitedState():
-                            self.UndoMove(color)
+                            self.UndoMove(color, move_cost)
                             new_state = self.CopyState()
-                            new_state.ApplyMove(color, (nr, nc))
+                            new_state.ApplyMove(color, (nr, nc), move_cost)
                             next_states.append(new_state)
                         else:
-                            self.UndoMove(color)
+                            self.UndoMove(color, move_cost)
         
         return next_states
     
@@ -69,29 +78,36 @@ class Game:
         new_board.grid = self.board.grid.copy()
         new_board.positions = self.board.positions
         
+        # NEW: Copy weights if they exist (for UCS)
+        if hasattr(self.board, 'weights'):
+            new_board.weights = self.board.weights.copy()
+        
         new_game = Game.__new__(Game)
         new_game.board = new_board
         new_game.paths = {color: path.copy() for color, path in self.paths.items()}
+        new_game.path_costs = self.path_costs.copy()  # NEW: For UCS
         new_game.completed_colors = self.completed_colors.copy()
         new_game.visited_states = self.visited_states
         new_game.current_color = self.current_color
         
         return new_game
     
-    def ApplyMove(self, color: int, pos: tuple):
+    def ApplyMove(self, color: int, pos: tuple, cost: float = 1.0):  # NEW: cost parameter
         end = tuple(self.board.positions[color]["end"])
         self.paths[color].append(pos)
+        self.path_costs[color] += cost  # NEW: Track cost
         
         if pos != end:
             self.board.grid[self._idx(pos[0], pos[1])] = color
         else:
             self.completed_colors.add(color)
     
-    def UndoMove(self, color: int):
+    def UndoMove(self, color: int, cost: float = 1.0):  # NEW: cost parameter
         if not self.paths[color]:
             return
         
         last = self.paths[color].pop()
+        self.path_costs[color] -= cost  # NEW: Undo cost
         end = tuple(self.board.positions[color]["end"])
         
         if last != end:
@@ -139,9 +155,11 @@ class Game:
     def resetGame(self):
         self.board.resetGrid()
         self.paths = {}
+        self.path_costs = {}  # NEW: Reset costs
         self.completed_colors = set()
         for color, pos in self.board.positions.items():
             self.paths[color] = [tuple(pos["start"])]
+            self.path_costs[color] = 0.0  # NEW: Initialize cost
         self.visited_states.clear()
         self.current_color = None
     
@@ -187,7 +205,7 @@ class Game:
         return dirs
     
     def printGameStatus(self):
-        print("\n================== CURRENT GAME STATE ==================")
+        print("\n=== CURRENT GAME STATE ======")
         self.board.printGrid()
         print(f"\nSelected color: {self.current_color}")
         print("\nPaths:")

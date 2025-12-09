@@ -1,15 +1,56 @@
 import numpy as np
 
 class Board:
+    
     def __init__(self, num_cols, num_rows, num_colors):
         self.cols = num_cols
         self.rows = num_rows
         self.num_colors = num_colors
         self.grid = np.zeros(self.rows * self.cols, dtype=np.uint8)
+        self.weights = np.ones(self.rows * self.cols, dtype=np.float32)   
         self.positions = {}
     
     def _index(self, row, col):
         return row * self.cols + col
+    
+    def set_weights_manually(self):
+        """Allow user to set custom weights for cells"""
+        print("\n=== SET CELL WEIGHTS ===")
+        print("Default weight for all cells is 1.0")
+        choice = input("Do you want to set custom weights? (y/n): ").lower()
+        
+        if choice == 'y':
+            print("\nEnter weights for each cell (row by row)")
+            for i in range(self.rows):
+                for j in range(self.cols):
+                    while True:
+                        try:
+                            weight = float(input(f"Weight for cell ({i},{j}): "))
+                            if weight > 0:
+                                self.weights[self._index(i, j)] = weight
+                                break
+                            else:
+                                print("Weight must be positive")
+                        except ValueError:
+                            print("Invalid input")
+            
+            print("\nWeights set successfully!")
+            self.print_weights()
+    
+    def print_weights(self):
+        """Display the weight grid"""
+        print("\n=== WEIGHT GRID ===")
+        for i in range(self.rows):
+            row = ""
+            for j in range(self.cols):
+                weight = self.weights[self._index(i, j)]
+                row += f"{weight:5.1f} "
+            print(row)
+        print()
+    
+    def get_weight(self, row, col):
+        """Get weight of a specific cell"""
+        return self.weights[self._index(row, col)]
     
     def printGrid(self):
         horiz = '+' + '----+' * self.cols
@@ -40,9 +81,6 @@ class Board:
         for i in range(numberOfColors):
             while True:
                 color = int(input(f"Enter color number {i+1}: "))
-                if color == 0:
-                    print("Color cannot be 0.")
-                    continue
                 if color in colors:
                     print("Color already used!")
                     continue
@@ -118,7 +156,6 @@ class Board:
             e = coord["end"]
             self.grid[self._index(s[0], s[1])] = color
             self.grid[self._index(e[0], e[1])] = color
-        print("Grid has been reset successfully.")
     
     def chooseStartEnd(self, color):
         while True:
