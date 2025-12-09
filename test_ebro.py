@@ -10,14 +10,12 @@ import numpy as np
 
 
 # player_info = {
-#     "red": {
+#     "1": {
 #         "start": (0, 5),
 #         "end": (10, 5),
-#         "score": 0
 #     },
-#     "blue": {
+#     "2": {
 #         "start": (5, 0),
 #         "end": (5, 10),
-#         "score": 0
 #     }
 # }
