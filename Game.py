@@ -17,7 +17,7 @@ class Game:
     def _idx(self, row, col):
         return row * self.board.cols + col
     
-    # NEW: For UCS
+    #   For UCS
     def get_total_cost(self) -> float:
         return sum(self.path_costs.values())
     
@@ -44,7 +44,7 @@ class Game:
                 
                 if cell == 0 or ((nr, nc) == end and cell == color):
                     if (nr, nc) not in path:
-                        # NEW: Get weight for UCS
+                        #  weight for UCS
                         move_cost = self.board.get_weight(nr, nc) if hasattr(self.board, 'get_weight') else 1.0
                         
                         self.ApplyMove(color, (nr, nc), move_cost)
