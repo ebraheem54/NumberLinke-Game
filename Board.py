@@ -7,17 +7,15 @@ class Board:
         self.rows = num_rows
         self.num_colors = num_colors
         self.grid = np.zeros(self.rows * self.cols, dtype=np.uint8)
-        self.weights = np.ones(self.rows * self.cols, dtype=np.float32)   
+        self.weights = np.ones(self.rows * self.cols, dtype=int)   
         self.positions = {}
     
     def _index(self, row, col):
         return row * self.cols + col
     
     def set_weights_manually(self):
-        """Allow user to set custom weights for cells"""
-        print("\n=== SET CELL WEIGHTS ===")
         print("Default weight for all cells is 1.0")
-        choice = input("Do you want to set custom weights? (y/n): ").lower()
+        choice = input("enter new weights (or default all ones)? (y/n): ").lower()
         
         if choice == 'y':
             print("\nEnter weights for each cell (row by row)")
@@ -26,7 +24,7 @@ class Board:
                     while True:
                         try:
                             weight = float(input(f"Weight for cell ({i},{j}): "))
-                            if weight > 0:
+                            if weight >= 0:
                                 self.weights[self._index(i, j)] = weight
                                 break
                             else:
